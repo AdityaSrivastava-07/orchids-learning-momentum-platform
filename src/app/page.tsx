@@ -7,6 +7,8 @@ import { MicroIntelligence } from "@/components/MicroIntelligence";
 import { LearningMomentumTimer } from "@/components/LearningMomentumTimer";
 import { ConfidenceCheckpoints } from "@/components/ConfidenceCheckpoints";
 import { AccountabilitySystem } from "@/components/AccountabilitySystem";
+import { LearningPath } from "@/components/LearningPath";
+import { ActiveQuests } from "@/components/ActiveQuests";
 import { DropoutRadar } from "@/components/DropoutRadar";
 import { Gamification } from "@/components/Gamification";
 import { BrowserExtension } from "@/components/BrowserExtension";
@@ -21,6 +23,8 @@ export default function Home() {
       <HeroSection />
       <MicroIntelligence />
       <LearningMomentumTimer />
+      <LearningPath />
+      <ActiveQuests />
       <ConfidenceCheckpoints />
       <AccountabilitySystem />
       <DropoutRadar />
