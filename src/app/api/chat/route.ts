@@ -49,6 +49,15 @@ Always encourage users to keep learning and celebrate their progress!`;
 
 export async function POST(request: NextRequest) {
   try {
+    const openai = getOpenAIClient();
+    
+    if (!openai) {
+      return NextResponse.json(
+        { error: "OpenAI API key not configured" },
+        { status: 500 }
+      );
+    }
+
     const { message, history } = await request.json();
 
     if (!message) {
