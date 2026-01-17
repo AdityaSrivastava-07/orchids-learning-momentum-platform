@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Bot, Sparkles } from "lucide-react";
+import { X, Send, Bot, Sparkles, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Message {
@@ -16,28 +16,22 @@ const quickReplies = [
   "How do I track my progress?",
   "What is the streak system?",
   "How do lives work?",
-  "Show my learning stats",
+  "Give me study tips",
 ];
-
-const botResponses: Record<string, string> = {
-  "how do i track my progress?": "Great question! 📊 Your progress is tracked automatically across all connected platforms. Check your dashboard to see:\n\n• Weekly momentum graphs\n• Module completion rates\n• Confidence scores\n• Time spent learning\n\nWant me to show you how to connect a platform?",
-  "what is the streak system?": "The streak system keeps you motivated! 🔥\n\n• Learn every day to maintain your streak\n• Current streak shown on your dashboard\n• Reach 7-day streaks to earn extra lives\n• Compete on the leaderboard\n\nYour current streak helps you stay consistent!",
-  "how do lives work?": "The lives system is designed to keep you accountable! ❤️\n\n• You start with 5 lives\n• Miss a day = lose 1 life\n• Complete a 7-day streak = gain 1 life\n• Lose all lives = your streak resets\n\nIt's like a game - but for your education!",
-  "show my learning stats": "Here are your quick stats! 📈\n\n• Current Streak: 5 days 🔥\n• Weekly Time: 6h 27m\n• Modules Completed: 12\n• Confidence Score: 85%\n• Leaderboard Rank: #47\n\nKeep up the great work!",
-};
 
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "Hi there! 👋 I'm your ऋStart learning assistant. How can I help you today?",
+      text: "Hi there! 👋 I'm your ऋStart learning assistant powered by AI. I can help you with anything about learning, progress tracking, gamification, study tips, and more! How can I help you today?",
       isBot: true,
       timestamp: new Date(),
     },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -48,8 +42,8 @@ export function AIChatbot() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
+  const handleSend = async (text: string) => {
+    if (!text.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now(),
@@ -61,29 +55,51 @@ export function AIChatbot() {
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsTyping(true);
+    setError(null);
 
-    setTimeout(() => {
-      const lowerText = text.toLowerCase().trim();
-      let response = botResponses[lowerText];
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: text.trim(),
+          history: messages.slice(-10).map((m) => ({
+            text: m.text,
+            isBot: m.isBot,
+          })),
+        }),
+      });
 
-      if (!response) {
-        const keys = Object.keys(botResponses);
-        const match = keys.find((key) => lowerText.includes(key.split(" ").slice(0, 3).join(" ")));
-        response = match
-          ? botResponses[match]
-          : "I'd love to help with that! 🤔 For specific questions about your learning journey, try asking about:\n\n• Progress tracking\n• Streak system\n• Lives & gamification\n• Platform connections\n\nOr check out our features section for more info!";
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response");
       }
 
       const botMessage: Message = {
         id: Date.now() + 1,
-        text: response,
+        text: data.reply,
         isBot: true,
         timestamp: new Date(),
       };
 
-      setIsTyping(false);
       setMessages((prev) => [...prev, botMessage]);
-    }, 1500);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setError("Sorry, I couldn't process that. Please try again!");
+      
+      const errorMessage: Message = {
+        id: Date.now() + 1,
+        text: "I'm having trouble connecting right now. Please try again in a moment! 🔄",
+        isBot: true,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -138,8 +154,11 @@ export function AIChatbot() {
                   <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#22c55e] border-2 border-white" />
                 </div>
                 <div>
-                  <div className="font-semibold text-white">ऋStart Assistant</div>
-                  <div className="text-xs text-white/80">Always here to help</div>
+                  <div className="font-semibold text-white">ऋStart AI Assistant</div>
+                  <div className="text-xs text-white/80 flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+                    Powered by AI
+                  </div>
                 </div>
               </div>
               <button
@@ -184,7 +203,7 @@ export function AIChatbot() {
                   className="flex justify-start"
                 >
                   <div className="bg-muted p-3 rounded-2xl rounded-tl-none">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 items-center">
                       {[0, 1, 2].map((i) => (
                         <motion.div
                           key={i}
@@ -193,10 +212,25 @@ export function AIChatbot() {
                           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
                         />
                       ))}
+                      <span className="text-xs text-muted-foreground ml-2">AI is thinking...</span>
                     </div>
                   </div>
                 </motion.div>
               )}
+
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-center"
+                >
+                  <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 px-3 py-2 rounded-full">
+                    <AlertCircle className="h-3 w-3" />
+                    {error}
+                  </div>
+                </motion.div>
+              )}
+
               <div ref={messagesEndRef} />
             </div>
 
@@ -206,7 +240,8 @@ export function AIChatbot() {
                   <button
                     key={reply}
                     onClick={() => handleSend(reply)}
-                    className="px-3 py-1.5 text-xs rounded-full bg-muted hover:bg-accent transition-colors"
+                    disabled={isTyping}
+                    className="px-3 py-1.5 text-xs rounded-full bg-muted hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {reply}
                   </button>
@@ -218,14 +253,16 @@ export function AIChatbot() {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSend(inputValue)}
-                  placeholder="Type your message..."
-                  className="flex-1 px-4 py-2 rounded-full bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-[#00f5ff] text-sm"
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend(inputValue)}
+                  placeholder="Ask me anything about learning..."
+                  disabled={isTyping}
+                  className="flex-1 px-4 py-2 rounded-full bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-[#00f5ff] text-sm disabled:opacity-50"
                 />
                 <Button
                   size="icon"
                   onClick={() => handleSend(inputValue)}
-                  className="rounded-full bg-gradient-to-r from-[#00f5ff] to-[#a855f7] hover:opacity-90"
+                  disabled={isTyping || !inputValue.trim()}
+                  className="rounded-full bg-gradient-to-r from-[#00f5ff] to-[#a855f7] hover:opacity-90 disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
