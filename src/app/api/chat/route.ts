@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return null;
+  }
+  return new OpenAI({ apiKey });
+}
 
 const SYSTEM_PROMPT = `You are ऋStart's friendly AI learning assistant. ऋStart (pronounced "Ri-Start") is an all-in-one learning momentum platform that prevents course dropout and boosts learner confidence.
 
