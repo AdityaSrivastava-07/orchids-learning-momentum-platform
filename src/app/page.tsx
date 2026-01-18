@@ -12,6 +12,7 @@ import { ActiveQuests } from "@/components/ActiveQuests";
 import { DropoutRadar } from "@/components/DropoutRadar";
 import { Gamification } from "@/components/Gamification";
 import { BrowserExtension } from "@/components/BrowserExtension";
+import { DonateSection } from "@/components/DonateSection";
 import { AIChatbot } from "@/components/AIChatbot";
 import { Footer } from "@/components/Footer";
 
