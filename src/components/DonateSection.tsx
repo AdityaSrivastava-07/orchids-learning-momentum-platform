@@ -152,65 +152,53 @@ export function DonateSection() {
                 <div className="mt-6 w-full">
                   <p className="text-sm text-muted-foreground text-center mb-3">Pay with your favorite app</p>
                   <div className="grid grid-cols-2 gap-3">
-                    <motion.button
+                    <motion.a
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        const phonepeUrl = `phonepe://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`;
-                        window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: phonepeUrl } }, "*");
-                      }}
+                      href={`phonepe://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#5f259f] hover:bg-[#5f259f]/90 text-white font-medium transition-all"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.5 14.5v-9l6 4.5-6 4.5z"/>
                       </svg>
                       PhonePe
-                    </motion.button>
+                    </motion.a>
 
-                    <motion.button
+                    <motion.a
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        const gpayUrl = `tez://upi/pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`;
-                        window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: gpayUrl } }, "*");
-                      }}
+                      href={`tez://upi/pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#4285f4] hover:bg-[#4285f4]/90 text-white font-medium transition-all"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                       </svg>
                       Google Pay
-                    </motion.button>
+                    </motion.a>
 
-                    <motion.button
+                    <motion.a
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        const paytmUrl = `paytmmp://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`;
-                        window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: paytmUrl } }, "*");
-                      }}
+                      href={`paytmmp://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#00baf2] hover:bg-[#00baf2]/90 text-white font-medium transition-all"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                       </svg>
                       Paytm
-                    </motion.button>
+                    </motion.a>
 
-                    <motion.button
+                    <motion.a
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        const fampayUrl = `upi://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`;
-                        window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: fampayUrl } }, "*");
-                      }}
+                      href={`upi://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
                       className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#ffcc00] hover:bg-[#ffcc00]/90 text-black font-medium transition-all"
                     >
                       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                       </svg>
                       FamPay
-                    </motion.button>
+                    </motion.a>
                   </div>
                 </div>
             </div>
