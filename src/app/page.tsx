@@ -31,6 +31,7 @@ export default function Home() {
       <DropoutRadar />
       <Gamification />
       <BrowserExtension />
+      <DonateSection />
       <Footer />
       <AIChatbot />
     </main>
