@@ -3,9 +3,7 @@ import OpenAI from "openai";
 
 function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return null;
-  }
+  if (!apiKey) return null;
   return new OpenAI({ apiKey });
 }
 
@@ -50,10 +48,10 @@ Always encourage users to keep learning and celebrate their progress!`;
 export async function POST(request: NextRequest) {
   try {
     const openai = getOpenAIClient();
-    
+
     if (!openai) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured" },
+        { error: "OpenAI API key not configured." },
         { status: 500 }
       );
     }
@@ -61,16 +59,13 @@ export async function POST(request: NextRequest) {
     const { message, history } = await request.json();
 
     if (!message) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Message is required." }, { status: 400 });
     }
 
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: SYSTEM_PROMPT },
       ...history.map((msg: { text: string; isBot: boolean }) => ({
-        role: msg.isBot ? "assistant" : "user",
+        role: msg.isBot ? ("assistant" as const) : ("user" as const),
         content: msg.text,
       })),
       { role: "user", content: message },
@@ -83,30 +78,32 @@ export async function POST(request: NextRequest) {
       temperature: 0.7,
     });
 
-    const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again!";
+    const reply =
+      completion.choices[0]?.message?.content ||
+      "I'm sorry, I couldn't generate a response. Please try again!";
 
     return NextResponse.json({ reply });
-    } catch (error: unknown) {
-      console.error("Chat API error:", error);
+  } catch (error: unknown) {
+    console.error("Chat API error:", error);
 
-      if (error instanceof OpenAI.APIError) {
-        if (error.status === 401) {
-          return NextResponse.json(
-            { error: "Invalid API key. Please check your OpenAI API key." },
-            { status: 500 }
-          );
-        }
-        if (error.status === 429) {
-          return NextResponse.json(
-            { error: "OpenAI quota exceeded. Please add credits at platform.openai.com/settings/billing." },
-            { status: 429 }
-          );
-        }
+    if (error instanceof OpenAI.APIError) {
+      if (error.status === 401) {
+        return NextResponse.json(
+          { error: "Invalid API key. Please check your OpenAI API key." },
+          { status: 500 }
+        );
       }
-
-      return NextResponse.json(
-        { error: "Failed to get response from AI. Please try again." },
-        { status: 500 }
-      );
+      if (error.status === 429) {
+        return NextResponse.json(
+          { error: "OpenAI quota exceeded. Please add billing credits at platform.openai.com/settings/billing to continue using the chatbot." },
+          { status: 429 }
+        );
+      }
     }
+
+    return NextResponse.json(
+      { error: "Failed to get a response. Please try again." },
+      { status: 500 }
+    );
+  }
 }
