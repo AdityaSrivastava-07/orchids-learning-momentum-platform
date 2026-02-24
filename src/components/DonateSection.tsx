@@ -3,24 +3,84 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Coffee, Sparkles, QrCode } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const presetAmounts = [50, 100, 200, 500, 1000];
 const UPI_ID = "7400383305@ybl";
+
+const paymentApps = [
+  {
+    name: "PhonePe",
+    bg: "bg-[#5f259f]",
+    hoverBg: "hover:bg-[#4a1d7a]",
+    textColor: "text-white",
+    getUrl: (amount: number) =>
+      `phonepe://pay?pa=${UPI_ID}&pn=RStart&am=${amount}&cu=INR&tn=Donation`,
+    icon: (
+      <svg viewBox="0 0 48 48" className="h-6 w-6" fill="none">
+        <circle cx="24" cy="24" r="24" fill="#5f259f"/>
+        <path d="M32.5 14h-7.8l-8.7 13.2 4.2 6.4 3.5-5.3h3.2c4.7 0 8.5-3.2 8.5-7.1 0-3.9-1.3-7.2-2.9-7.2zm-5 10.6h-2.8l2.8-4.3c1 .5 1.7 1.5 1.7 2.5 0 1-.8 1.8-1.7 1.8z" fill="white"/>
+      </svg>
+    ),
+  },
+  {
+    name: "Google Pay",
+    bg: "bg-white",
+    hoverBg: "hover:bg-gray-100",
+    textColor: "text-gray-800",
+    borderColor: "border border-gray-200",
+    getUrl: (amount: number) =>
+      `tez://upi/pay?pa=${UPI_ID}&pn=RStart&am=${amount}&cu=INR&tn=Donation`,
+    icon: (
+      <svg viewBox="0 0 48 48" className="h-6 w-6">
+        <path d="M43.6 20H24v8.4h11.1C33.6 32.7 29.3 35 24 35c-6.1 0-11-4.9-11-11s4.9-11 11-11c2.7 0 5.2 1 7.1 2.6l6-6C33.8 7 29.1 5 24 5 12.4 5 3 14.4 3 26s9.4 21 21 21c10.8 0 20-7.8 20-21 0-1.4-.1-2.7-.4-4z" fill="#FFC107"/>
+        <path d="M6.3 15.6l6.9 5.1C15 17.1 19.2 14 24 14c2.7 0 5.2 1 7.1 2.6l6-6C33.8 7 29.1 5 24 5c-7.7 0-14.3 4.4-17.7 10.6z" fill="#FF3D00"/>
+        <path d="M24 47c5.2 0 9.9-1.9 13.5-5.1l-6.2-5.2C29.4 38.5 26.8 39.5 24 39.5c-5.2 0-9.6-3.5-11.2-8.2l-6.9 5.3C9.7 43 16.3 47 24 47z" fill="#4CAF50"/>
+        <path d="M43.6 20H24v8.4h11.1c-.8 2.2-2.3 4-4.2 5.3l6.2 5.2C40.7 35.6 44 31.1 44 26c0-1.4-.1-2.7-.4-4z" fill="#1976D2"/>
+      </svg>
+    ),
+  },
+  {
+    name: "Paytm",
+    bg: "bg-[#00baf2]",
+    hoverBg: "hover:bg-[#0099cc]",
+    textColor: "text-white",
+    getUrl: (amount: number) =>
+      `paytmmp://pay?pa=${UPI_ID}&pn=RStart&am=${amount}&cu=INR&tn=Donation`,
+    icon: (
+      <svg viewBox="0 0 48 48" className="h-6 w-6" fill="none">
+        <rect width="48" height="48" rx="8" fill="#00baf2"/>
+        <text x="7" y="30" fontSize="14" fontWeight="bold" fill="white" fontFamily="Arial">Paytm</text>
+      </svg>
+    ),
+  },
+  {
+    name: "FamPay",
+    bg: "bg-[#ffcc00]",
+    hoverBg: "hover:bg-[#e6b800]",
+    textColor: "text-black",
+    getUrl: (amount: number) =>
+      `upi://pay?pa=${UPI_ID}&pn=RStart&am=${amount}&cu=INR&tn=Donation`,
+    icon: (
+      <svg viewBox="0 0 48 48" className="h-6 w-6" fill="none">
+        <rect width="48" height="48" rx="8" fill="#ffcc00"/>
+        <text x="5" y="30" fontSize="12" fontWeight="bold" fill="black" fontFamily="Arial">FamPay</text>
+      </svg>
+    ),
+  },
+];
 
 export function DonateSection() {
   const [amount, setAmount] = useState(100);
   const [customAmount, setCustomAmount] = useState("");
 
   const currentAmount = customAmount ? parseInt(customAmount) || 0 : amount;
-  
+
   const upiUrl = `upi://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation%20to%20RStart`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
 
   return (
     <section className="relative py-24 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-pink-500/5 to-orange-500/5 dark:via-pink-500/10 dark:to-orange-500/10" />
-      
       <div className="absolute top-1/4 -left-32 w-64 h-64 bg-pink-500/20 dark:bg-pink-500/10 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 -right-32 w-64 h-64 bg-orange-500/20 dark:bg-orange-500/10 rounded-full blur-3xl" />
 
@@ -49,9 +109,9 @@ export function DonateSection() {
             </span>
             <Coffee className="inline-block ml-3 h-10 w-10 text-orange-500" />
           </h2>
-          
+
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Your support helps us build better learning tools for everyone. 
+            Your support helps us build better learning tools for everyone.
             Every contribution, big or small, fuels our mission to make education accessible.
           </p>
         </motion.div>
@@ -63,13 +123,14 @@ export function DonateSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="glass-card rounded-3xl p-8 md:p-12"
         >
-          <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            {/* Left: Amount selector */}
             <div>
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-[#00f5ff]" />
                 Choose Amount
               </h3>
-              
+
               <div className="flex flex-wrap gap-3 mb-6">
                 {presetAmounts.map((preset) => (
                   <motion.button
@@ -115,14 +176,39 @@ export function DonateSection() {
                   ₹{currentAmount || 0}
                 </p>
               </div>
+
+              {/* Payment App Buttons */}
+              <div className="mt-6">
+                <p className="text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                  Pay directly with your app
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  {paymentApps.map((app) => (
+                    <motion.a
+                      key={app.name}
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
+                      href={app.getUrl(currentAmount)}
+                      className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold transition-all ${app.bg} ${app.hoverBg} ${app.textColor} ${"borderColor" in app ? app.borderColor : ""}`}
+                    >
+                      {app.icon}
+                      <span className="text-sm">{app.name}</span>
+                    </motion.a>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Opens the app with ₹{currentAmount} pre-filled
+                </p>
+              </div>
             </div>
 
+            {/* Right: QR Code */}
             <div className="flex flex-col items-center">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <QrCode className="h-5 w-5 text-[#00f5ff]" />
                 Scan to Pay
               </h3>
-              
+
               <motion.div
                 key={currentAmount}
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -144,63 +230,16 @@ export function DonateSection() {
                 />
               </motion.div>
 
-                <p className="mt-4 text-sm text-muted-foreground text-center">
-                  Scan with any UPI app<br />
-                  <span className="font-mono text-xs">{UPI_ID}</span>
+              <p className="mt-4 text-sm text-muted-foreground text-center">
+                Scan with any UPI app<br />
+                <span className="font-mono text-xs">{UPI_ID}</span>
+              </p>
+
+              <div className="mt-4 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/10 to-orange-500/10 border border-pink-500/20">
+                <p className="text-sm font-semibold text-center">
+                  Amount: <span className="bg-gradient-to-r from-pink-500 to-orange-500 bg-clip-text text-transparent">₹{currentAmount || 0}</span>
                 </p>
-
-                <div className="mt-6 w-full">
-                  <p className="text-sm text-muted-foreground text-center mb-3">Pay with your favorite app</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <motion.a
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      href={`phonepe://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#5f259f] hover:bg-[#5f259f]/90 text-white font-medium transition-all"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1.5 14.5v-9l6 4.5-6 4.5z"/>
-                      </svg>
-                      PhonePe
-                    </motion.a>
-
-                    <motion.a
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      href={`tez://upi/pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#4285f4] hover:bg-[#4285f4]/90 text-white font-medium transition-all"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      Google Pay
-                    </motion.a>
-
-                    <motion.a
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      href={`paytmmp://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#00baf2] hover:bg-[#00baf2]/90 text-white font-medium transition-all"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
-                      </svg>
-                      Paytm
-                    </motion.a>
-
-                    <motion.a
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      href={`upi://pay?pa=${UPI_ID}&pn=RStart&am=${currentAmount}&cu=INR&tn=Donation`}
-                      className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#ffcc00] hover:bg-[#ffcc00]/90 text-black font-medium transition-all"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                      </svg>
-                      FamPay
-                    </motion.a>
-                  </div>
-                </div>
+              </div>
             </div>
           </div>
         </motion.div>
