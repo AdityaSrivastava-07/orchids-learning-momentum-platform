@@ -86,19 +86,27 @@ export async function POST(request: NextRequest) {
     const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response. Please try again!";
 
     return NextResponse.json({ reply });
-  } catch (error: unknown) {
-    console.error("Chat API error:", error);
-    
-    if (error instanceof OpenAI.APIError && error.status === 401) {
+    } catch (error: unknown) {
+      console.error("Chat API error:", error);
+
+      if (error instanceof OpenAI.APIError) {
+        if (error.status === 401) {
+          return NextResponse.json(
+            { error: "Invalid API key. Please check your OpenAI API key." },
+            { status: 500 }
+          );
+        }
+        if (error.status === 429) {
+          return NextResponse.json(
+            { error: "OpenAI quota exceeded. Please add credits at platform.openai.com/settings/billing." },
+            { status: 429 }
+          );
+        }
+      }
+
       return NextResponse.json(
-        { error: "API key not configured. Please set up your OpenAI API key." },
+        { error: "Failed to get response from AI. Please try again." },
         { status: 500 }
       );
     }
-
-    return NextResponse.json(
-      { error: "Failed to get response from AI" },
-      { status: 500 }
-    );
-  }
 }
