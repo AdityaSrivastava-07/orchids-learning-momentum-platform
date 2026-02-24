@@ -60,9 +60,7 @@ export function AIChatbot() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text.trim(),
           history: messages.slice(-10).map((m) => ({
@@ -78,29 +76,39 @@ export function AIChatbot() {
         throw new Error(data.error || "Failed to get response");
       }
 
-      const botMessage: Message = {
-        id: Date.now() + 1,
-        text: data.reply,
-        isBot: true,
-        timestamp: new Date(),
-      };
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          text: data.reply,
+          isBot: true,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Sorry, something went wrong.";
+      const isQuota =
+        errMsg.toLowerCase().includes("quota") ||
+        errMsg.toLowerCase().includes("billing") ||
+        errMsg.toLowerCase().includes("exceeded");
 
-      setMessages((prev) => [...prev, botMessage]);
-      } catch (err: unknown) {
-        console.error("Chat error:", err);
-        const errMsg = err instanceof Error ? err.message : "Sorry, I couldn't process that.";
-        const isQuota = errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing");
-        setError(isQuota ? "⚠️ OpenAI quota exceeded. Please add billing credits at platform.openai.com/settings/billing." : errMsg);
+      setError(
+        isQuota
+          ? "⚠️ OpenAI quota exceeded — please add billing credits."
+          : errMsg
+      );
 
-        const errorMessage: Message = {
+      setMessages((prev) => [
+        ...prev,
+        {
           id: Date.now() + 1,
           text: isQuota
-            ? "⚠️ My AI brain is out of credits right now! Please ask the site owner to top up their OpenAI account at platform.openai.com/settings/billing."
+            ? "⚠️ My AI brain is out of credits right now! The site owner needs to add billing credits at platform.openai.com/settings/billing to restore full functionality."
             : "I'm having trouble connecting right now. Please try again in a moment! 🔄",
           isBot: true,
           timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -123,10 +131,7 @@ export function AIChatbot() {
               <Bot className="h-8 w-8 text-white" />
               <motion.div
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#00f5ff]"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [1, 0.8, 1],
-                }}
+                animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
             </div>
@@ -149,6 +154,7 @@ export function AIChatbot() {
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-48px)] h-[600px] max-h-[calc(100vh-100px)] rounded-3xl overflow-hidden shadow-2xl border border-border dark:neon-border flex flex-col bg-background"
           >
+            {/* Header */}
             <div className="p-4 bg-gradient-to-r from-[#00f5ff] to-[#a855f7] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -161,7 +167,7 @@ export function AIChatbot() {
                   <div className="font-semibold text-white">ऋStart AI Assistant</div>
                   <div className="text-xs text-white/80 flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-                    Powered by AI
+                    Powered by GPT-4o Mini
                   </div>
                 </div>
               </div>
@@ -173,6 +179,7 @@ export function AIChatbot() {
               </button>
             </div>
 
+            {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {messages.map((message) => (
                 <motion.div
@@ -194,7 +201,10 @@ export function AIChatbot() {
                         message.isBot ? "text-muted-foreground" : "text-white/70"
                       }`}
                     >
-                      {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
                 </motion.div>
@@ -216,7 +226,9 @@ export function AIChatbot() {
                           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
                         />
                       ))}
-                      <span className="text-xs text-muted-foreground ml-2">AI is thinking...</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        AI is thinking...
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -229,8 +241,8 @@ export function AIChatbot() {
                   className="flex justify-center"
                 >
                   <div className="flex items-center gap-2 text-xs text-red-500 bg-red-500/10 px-3 py-2 rounded-full">
-                    <AlertCircle className="h-3 w-3" />
-                    {error}
+                    <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                    <span>{error}</span>
                   </div>
                 </motion.div>
               )}
@@ -238,6 +250,7 @@ export function AIChatbot() {
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Quick Replies + Input */}
             <div className="p-3 border-t border-border">
               <div className="flex flex-wrap gap-2 mb-3">
                 {quickReplies.map((reply) => (
@@ -257,7 +270,9 @@ export function AIChatbot() {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend(inputValue)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !e.shiftKey && handleSend(inputValue)
+                  }
                   placeholder="Ask me anything about learning..."
                   disabled={isTyping}
                   className="flex-1 px-4 py-2 rounded-full bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-[#00f5ff] text-sm disabled:opacity-50"
