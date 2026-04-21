@@ -12,12 +12,106 @@ interface Message {
   timestamp: Date;
 }
 
+const SYSTEM_PROMPT = `You are ऋStart's friendly AI learning assistant. ऋStart (pronounced "Ri-Start") is an all-in-one learning momentum platform that prevents course dropout and boosts learner confidence.
+
+Your personality:
+- Friendly, encouraging, and supportive
+- Use relevant emojis to make responses engaging
+- Keep responses concise but helpful (2-4 short paragraphs max)
+- Always be positive and motivating about the user's learning journey
+
+Key features of ऋStart you should know about:
+1. **Micro-Intelligence Layer**: AI-powered summaries of learning progress, "next tiny step" recommendations, 10-minute micro-lessons
+2. **Learning Momentum Timer**: Auto-splits videos into 10-min chunks, momentum graphs tracking time (not just streak days)
+3. **Confidence Checkpoints**: 20-second confidence polls, adaptive clarifications, social proof from other learners
+4. **Accountability System**: Learning contracts, timezone-aware buddy matching, weekly check-ins, recovery plans
+5. **Dropout Radar Analytics**: ML-powered dropout predictions, quiz difficulty analysis, A/B testing
+6. **Gamification**: Leaderboards, daily streaks, 5 lives system (lose 1 life per missed day, gain 1 life per 7-day streak), achievements
+7. **Learning Path**: Visual course journey showing completed, current, pending, and locked courses with XP rewards
+8. **Active Quests**: Daily/Weekly/Monthly challenges for bonus XP
+9. **Browser Extension**: Works on Udemy, Coursera, YouTube, Notion
+
+Always encourage users to keep learning and celebrate their progress!`;
+
 const quickReplies = [
   "How do I track my progress?",
   "What is the streak system?",
   "How do lives work?",
   "Give me study tips",
 ];
+
+async function callOpenAI(
+  message: string,
+  history: { text: string; isBot: boolean }[]
+): Promise<string> {
+  // Try the Next.js API route first (works on dev server / Vercel / any server)
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.reply;
+    }
+    // If API route returned an error, fall through to client-side call
+    const errData = await res.json().catch(() => ({}));
+    if (res.status === 429) {
+      throw new Error(errData.error || "quota_exceeded");
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("quota") || msg.includes("billing")) throw e;
+    // Network error or 404 (static export) — fall through
+  }
+
+  // Client-side OpenAI call (GitHub Pages static export)
+  const apiKey =
+    process.env.NEXT_PUBLIC_OPENAI_API_KEY ||
+    (typeof window !== "undefined" ? (window as unknown as Record<string, string>).__OPENAI_KEY__ : undefined);
+
+  if (!apiKey) {
+    throw new Error(
+      "AI is not configured. Please add your OpenAI key as NEXT_PUBLIC_OPENAI_API_KEY in the environment."
+    );
+  }
+
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT },
+    ...history.slice(-10).map((m) => ({
+      role: m.isBot ? "assistant" : "user",
+      content: m.text,
+    })),
+    { role: "user", content: message },
+  ];
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages,
+      max_tokens: 500,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    if (response.status === 429) throw new Error("quota_exceeded");
+    throw new Error(err?.error?.message || "OpenAI request failed");
+  }
+
+  const data = await response.json();
+  return (
+    data.choices?.[0]?.message?.content ||
+    "I'm sorry, I couldn't generate a response. Please try again!"
+  );
+}
 
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,49 +152,39 @@ export function AIChatbot() {
     setError(null);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: text.trim(),
-          history: messages.slice(-10).map((m) => ({
-            text: m.text,
-            isBot: m.isBot,
-          })),
-        }),
-      });
+      const reply = await callOpenAI(
+        text.trim(),
+        messages.slice(-10).map((m) => ({ text: m.text, isBot: m.isBot }))
+      );
 
-      const data = await response.json();
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: reply, isBot: true, timestamp: new Date() },
+      ]);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Unknown error";
+      const isQuota =
+        errMsg.includes("quota") ||
+        errMsg.includes("billing") ||
+        errMsg.includes("quota_exceeded");
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to get response");
-      }
+      setError(
+        isQuota
+          ? "⚠️ OpenAI quota exceeded. Add billing credits at platform.openai.com/settings/billing."
+          : errMsg
+      );
 
-      const botMessage: Message = {
-        id: Date.now() + 1,
-        text: data.reply,
-        isBot: true,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-      } catch (err: unknown) {
-        console.error("Chat error:", err);
-        const errMsg = err instanceof Error ? err.message : "Sorry, I couldn't process that.";
-        const isQuota = errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("billing");
-        setError(isQuota ? "⚠️ OpenAI quota exceeded. Please add billing credits at platform.openai.com/settings/billing." : errMsg);
-
-        const errorMessage: Message = {
+      setMessages((prev) => [
+        ...prev,
+        {
           id: Date.now() + 1,
           text: isQuota
-            ? "⚠️ My AI brain is out of credits right now! Please ask the site owner to top up their OpenAI account at platform.openai.com/settings/billing."
+            ? "⚠️ My AI brain is out of credits right now! Please ask the site owner to top up their OpenAI account. 🔋"
             : "I'm having trouble connecting right now. Please try again in a moment! 🔄",
           isBot: true,
           timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -123,10 +207,7 @@ export function AIChatbot() {
               <Bot className="h-8 w-8 text-white" />
               <motion.div
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#00f5ff]"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [1, 0.8, 1],
-                }}
+                animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
             </div>
@@ -194,7 +275,10 @@ export function AIChatbot() {
                         message.isBot ? "text-muted-foreground" : "text-white/70"
                       }`}
                     >
-                      {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {message.timestamp.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
                 </motion.div>
@@ -216,7 +300,9 @@ export function AIChatbot() {
                           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2 }}
                         />
                       ))}
-                      <span className="text-xs text-muted-foreground ml-2">AI is thinking...</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        AI is thinking...
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -257,7 +343,9 @@ export function AIChatbot() {
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend(inputValue)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !e.shiftKey && handleSend(inputValue)
+                  }
                   placeholder="Ask me anything about learning..."
                   disabled={isTyping}
                   className="flex-1 px-4 py-2 rounded-full bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-[#00f5ff] text-sm disabled:opacity-50"
